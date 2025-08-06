@@ -4,7 +4,7 @@
  */
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "todo-api",
+	"name": "lark-end2end-encrypted",
 	"main": "src/index.ts",
 	"compatibility_date": "2025-07-08",
 	"observability": {
@@ -19,11 +19,11 @@
 			"id": "ea66ccb4597a4d17ad22004365358f95"
 		}
 	],
-	"triggers": {
-		"crons": [
-			"0 */1 * * *"
-		]
-	},
+	// "triggers": {
+	// 	"crons": [
+	// 		"0 */1 * * *"
+	// 	]
+	// },
 	/**
 	 * 注意：FEISHU_APP_ID和FEISHU_APP_SECRET应该使用wrangler secrets设置
 	 * 运行以下命令:

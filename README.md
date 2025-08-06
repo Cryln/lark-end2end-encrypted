@@ -1,4 +1,4 @@
-# 飞书应用服务端 (Cloudflare Worker)
+# 飞书端到端加密应用 (lark-end2end-encrypted)
 
 这个项目实现了一个运行在Cloudflare Worker上的飞书应用服务端，提供以下功能：
 
