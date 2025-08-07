@@ -3,8 +3,6 @@
  * 用于在应用启动时初始化飞书相关功能
  */
 
-import CacheService from '../../utils/cache';
-
 declare global {
   interface Window {
     h5sdk: any;
@@ -79,6 +77,38 @@ export async function getPubKey(openId: string): Promise<string | undefined> {
   const data = await response.json()
   return data.data
 }
+
+/**
+ * 通过临时授权码获取用户信息
+ * @param code 临时授权码
+ * @param redirectUri 重定向URI（可选）
+ * @returns 用户信息
+ */
+export async function getUserInfo(code: string, redirectUri?: string): Promise<any> {
+  try {
+    const response = await fetch('/feishu/user-info', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        code,
+        redirectUri,
+      }),
+    });
+    const data = await response.json();
+    if (data.success) {
+      return data.data;
+    } else {
+      console.error(`[getUserInfo]获取用户信息失败: ${data.message}`);
+      throw new Error(`获取用户信息失败: ${data.message}`);
+    }
+  } catch (error) {
+    console.error(`[getUserInfo]获取用户信息异常: ${error instanceof Error ? error.message : String(error)}`);
+    throw error;
+  }
+}
+
 
 /**
  * 初始化飞书SDK

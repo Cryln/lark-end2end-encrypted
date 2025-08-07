@@ -17,7 +17,7 @@ router
   // 飞书API路由
   .post('/feishu/refresh-token', handleRefreshFeishuToken)
   .get('/feishu/jsapi-signature', handleGetJsapiSignature)
-  .get('/feishu/user-info', handleGetUserInfoByCode)
+  .post('/feishu/user-info', handleGetUserInfoByCode)
 
   // 404路由
   .all('*', () => new Response(JSON.stringify({

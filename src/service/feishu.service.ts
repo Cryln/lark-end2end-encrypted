@@ -1,5 +1,4 @@
 import { Crypto } from '@cloudflare/workers-types';
-import * as lark from '@larksuiteoapi/node-sdk';
 import { TenantAccessTokenResponse, JsapiTicketResponse, UserAccessTokenResponse, UserInfoResponse } from '../dto/resp/feishu.resp';
 
 declare const crypto: Crypto;
@@ -240,35 +239,28 @@ export class FeishuService {
    * @returns 用户信息
    */
   async getUserInfo(userAccessToken: string): Promise<UserInfoResponse> {
-    // 开发者复制该Demo后，需要修改Demo里面的"app id", "app secret"为自己应用的appId, appSecret
-    const client = new lark.Client({
-      appId: this.appId,
-      appSecret: this.appSecret,
-      // disableTokenCache为true时，SDK不会主动拉取并缓存token，这时需要在发起请求时，调用lark.withTenantToken("token")手动传递
-      // disableTokenCache为false时，SDK会自动管理租户token的获取与刷新，无需使用lark.withTenantToken("token")手动传递token
-      disableTokenCache: true
-    });
+    const url = `${this.feishuHost}/open-apis/authen/v1/user_info`;
+    const response = await Promise.race([
+      fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${userAccessToken}`,
+          'Content-Type': 'application/json; charset=utf-8'
+        }
+      }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('获取用户信息超时')), this.timeoutMs)
+      )
+    ]);
 
-    try {
-      // 调用API获取用户信息
-      const res = await client.authen.v1.userInfo.get(
-        {},
-        lark.withTenantToken(userAccessToken)
-      );
-
-      console.log('[getUserInfoV2] 获取用户信息响应:', res);
-
-      // 检查响应状态
-      if (res.code !== 0 || !res.data) {
-        throw new Error(`获取用户信息失败: ${res.msg || '未知错误'}`);
-      }
-
-      // 类型转换并返回用户信息
-      return res as UserInfoResponse;
-    } catch (e) {
-      console.error('[getUserInfoV2] 获取用户信息失败:', e);
-      const errorMessage = e instanceof Error ? e.message : '获取用户信息失败';
-      throw new Error(errorMessage);
+    if (!response.ok) {
+      throw new Error(`获取用户信息失败: ${response.status} ${response.statusText}`);
     }
+
+    const data: UserInfoResponse = await response.json();
+    if (data.code !== 0) {
+      throw new Error(`获取用户信息失败: ${data.msg}`);
+    }
+    return data;
   }
 }

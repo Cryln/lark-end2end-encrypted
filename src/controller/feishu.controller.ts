@@ -168,6 +168,7 @@ export async function handleGetUserInfoByCode(request: Request, env: Env) {
 
     // 第一步：获取user_access_token
     const userAccessTokenResponse = await feishuService.getUserAccessToken(code, redirectUri);
+    console.log(`[handleGetUserInfoByCode] 获取user_access_token成功: ${JSON.stringify(userAccessTokenResponse)}`);
     const userAccessToken = userAccessTokenResponse.access_token;
 
     // 第二步：获取用户信息

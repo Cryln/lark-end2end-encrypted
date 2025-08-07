@@ -4,8 +4,9 @@ import { arrayBufferToBase64 } from '../utils/convert';
 import CacheService from '../utils/cache';
 import { ChatContext, getChatMessage } from '../constants/types';
 import { log } from './LogDisplay';
-import { getBlockActionSourceDetail } from '../api/feishu';
+import { getBlockActionSourceDetail, getUserInfo } from '../api/feishu';
 import { newMessageCard } from '../api/feishu/sendMessageCard';
+import { requestAccess } from '../api/feishu/requestAccess';
 
 // // 模拟消息类型定义
 // interface Message {
@@ -52,6 +53,13 @@ const ChatSection: React.FC<ChatSectionProps> = ({
   useEffect(() => {
     async function fetchMessages() {
       try {
+        const accessResp = await requestAccess({
+          scopeList: [],
+        })
+        const userInfo = await getUserInfo(accessResp.code, location.href.split('?')[0].split('#')[0])
+        log(`[ChatSection]获取用户信息: ${JSON.stringify(userInfo)}`)
+
+
         const messageDetail = await getBlockActionSourceDetail();
         if (messageDetail && messageDetail.content && messageDetail.content.messages.length > 0) {
           const msg = messageDetail.content.messages[0]
