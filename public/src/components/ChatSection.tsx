@@ -4,7 +4,7 @@ import { arrayBufferToBase64 } from '../utils/convert';
 import CacheService from '../utils/cache';
 import { ChatContext, getChatMessage } from '../constants/types';
 import { log } from './LogDisplay';
-import { getBlockActionSourceDetail, getUserInfo } from '../api/feishu';
+import { getBlockActionSourceDetail, getPubKey, getUserInfo } from '../api/feishu';
 import { newMessageCard } from '../api/feishu/sendMessageCard';
 import { requestAccess } from '../api/feishu/requestAccess';
 
@@ -56,8 +56,20 @@ const ChatSection: React.FC<ChatSectionProps> = ({
         const accessResp = await requestAccess({
           scopeList: [],
         })
+        // 查询用户信息
         const userInfo = await getUserInfo(accessResp.code, location.href.split('?')[0].split('#')[0])
         log(`[ChatSection]获取用户信息: ${JSON.stringify(userInfo)}`)
+        if (!userInfo.data || !userInfo.data.open_id) {
+          throw new Error('获取用户信息失败')
+        }
+        chatContext.setMyOpenId(userInfo.data.open_id)
+
+        // 查询用户公钥
+        const publicKey = await getPubKey(userInfo.data.open_id)
+        log(`[ChatSection]获取用户公钥: ${publicKey}`)
+        if (!publicKey) {
+          throw new Error('获取用户公钥失败')
+        }
 
 
         const messageDetail = await getBlockActionSourceDetail();

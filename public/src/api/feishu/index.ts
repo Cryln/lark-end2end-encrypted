@@ -84,7 +84,8 @@ export async function getPubKey(openId: string): Promise<string | undefined> {
  * @param redirectUri 重定向URI（可选）
  * @returns 用户信息
  */
-export async function getUserInfo(code: string, redirectUri?: string): Promise<any> {
+import { UserInfoResponse } from '@dto/resp/feishu.resp'
+export async function getUserInfo(code: string, redirectUri?: string): Promise<UserInfoResponse> {
   try {
     const response = await fetch('/feishu/user-info', {
       method: 'POST',
@@ -98,7 +99,7 @@ export async function getUserInfo(code: string, redirectUri?: string): Promise<a
     });
     const data = await response.json();
     if (data.success) {
-      return data.data;
+      return data.data as UserInfoResponse;
     } else {
       console.error(`[getUserInfo]获取用户信息失败: ${data.message}`);
       throw new Error(`获取用户信息失败: ${data.message}`);

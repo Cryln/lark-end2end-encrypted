@@ -14,6 +14,7 @@ export type SupportedAlgorithmConfig = AlgorithmConfig & {
 
 export class ChatContext {
   openChatId: string;
+  myOpenId?: string;
   friendOpenId?: string;
   triggerMessage?: LarkMessage;
 
@@ -22,6 +23,9 @@ export class ChatContext {
   }
   setOpenChatId(openChatId: string) {
     this.openChatId = openChatId;
+  }
+  setMyOpenId(myOpenId?: string) {
+    this.myOpenId = myOpenId;
   }
   setFriendOpenId(friendOpenId?: string) {
     this.friendOpenId = friendOpenId;

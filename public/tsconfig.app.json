@@ -18,6 +18,12 @@
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
+
+    /* Path aliases for shared DTOs */
+    "baseUrl": ".",
+    "paths": {
+      "@dto/*": ["../src/dto/*"],
+    },
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
