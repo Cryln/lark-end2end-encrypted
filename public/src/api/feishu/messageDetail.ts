@@ -5,13 +5,17 @@
 
 // 导入日志工具
 import { log, logError } from '../../components/LogDisplay';
+import { GetMsgDetailResp } from '../../constants/types';
+
+
+
 
 /**
  * 获取消息详情
  * @param triggerCode 触发码
  * @returns 消息详情
  */
-export async function getBlockActionSourceDetail(): Promise<any> {
+export async function getBlockActionSourceDetail(): Promise<GetMsgDetailResp> {
   const triggerCode = getTriggerCode();
   return new Promise((resolve, reject) => {
     if (window.h5sdk) {

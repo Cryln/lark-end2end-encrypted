@@ -1,8 +1,6 @@
-import React, { useEffect } from 'react';
-import { getBlockActionSourceDetail } from '../api/feishu/messageDetail';
+import React from 'react';
 import { ERROR_MESSAGES } from '../constants/algorithms';
 import { arrayBufferToBase64, base64ToArrayBuffer } from '../utils/convert';
-import { sendMessageCardV2 } from '../api/feishu';
 
 interface EncryptionSectionProps {
   plaintext: string;
@@ -75,35 +73,33 @@ const EncryptionSection: React.FC<EncryptionSectionProps> = ({
       alert(ERROR_MESSAGES.EMPTY_CIPHERTEXT)
       return
     }
-    const res = await sendMessageCardV2("加密消息", ciphertext)
-    console.log(res)
   }
 
   // 在组件初始化时调用getBlockActionSourceDetail
-  useEffect(() => {
-    async function fetchMessageDetail() {
-      try {
-        const messageDetail = await getBlockActionSourceDetail();
-        // 假设消息详情中的content字段包含需要加密的原文
-        if (messageDetail && messageDetail.content) {
-          // 如果content是字符串，直接设置
-          if (typeof messageDetail.content === 'string') {
-            setPlaintext(messageDetail.content);
-          }
-          // 如果content是对象，尝试获取其中的文本内容
-          else if (typeof messageDetail.content === 'object') {
-            // 这里假设对象中有text或message字段
-            const text = messageDetail.content.text || messageDetail.content.message || JSON.stringify(messageDetail.content);
-            setPlaintext(text);
-          }
-        }
-      } catch (error) {
-        console.error('获取消息详情失败:', error);
-      }
-    }
+  // useEffect(() => {
+  //   async function fetchMessageDetail() {
+  //     try {
+  //       const messageDetail = await getBlockActionSourceDetail();
+  //       // 假设消息详情中的content字段包含需要加密的原文
+  //       if (messageDetail && messageDetail.content) {
+  //         // 如果content是字符串，直接设置
+  //         if (typeof messageDetail.content === 'string') {
+  //           setPlaintext(messageDetail.content);
+  //         }
+  //         // 如果content是对象，尝试获取其中的文本内容
+  //         else if (typeof messageDetail.content === 'object') {
+  //           // 这里假设对象中有text或message字段
+  //           const text = messageDetail.content.text || messageDetail.content.message || JSON.stringify(messageDetail.content);
+  //           setPlaintext(text);
+  //         }
+  //       }
+  //     } catch (error) {
+  //       console.error('获取消息详情失败:', error);
+  //     }
+  //   }
 
-    fetchMessageDetail();
-  }, [setPlaintext]);
+  //   fetchMessageDetail();
+  // }, [setPlaintext]);
 
   return (
     <div className="space-y-4">

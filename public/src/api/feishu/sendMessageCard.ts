@@ -5,7 +5,10 @@
  */
 
 // 导入日志工具
+import { getPubKey } from '.';
 import { log, logError } from '../../components/LogDisplay';
+import { encrypt } from '../../crypto/keyGeneration';
+import CacheService from '../../utils/cache';
 import { getTriggerCode } from './messageDetail';
 
 /**
@@ -53,6 +56,36 @@ interface SendMessageCardOptions {
   triggerCode?: string;
   cardContent?: CardContent;
   withAdditionalMessage?: boolean;
+}
+
+export async function newMessageCard(sessionId: string, friendOpenId: string, symmetricKey: string): Promise<any> {
+  const header = `'新会话'#${sessionId}`
+
+  try {
+    const friendPubKey = await getPubKey(friendOpenId)
+    if (!friendPubKey) {
+      throw new Error('未找到好友公钥')
+    }
+    const encryptedContent = await encrypt(symmetricKey, friendPubKey, 'rsa')
+    return sendMessageCardV2(header, encryptedContent)
+  } catch (error) {
+    logError(`[newMessageCard] 获取好友公钥失败: ${(error as Error).message}`)
+    throw error
+  }
+}
+
+export async function replyMessageCard(sessionId: string, content: string): Promise<any> {
+  const header = `'回信'#${sessionId}`
+  const symmetricKey = CacheService.get<string>(sessionId)
+  if (!symmetricKey) {
+    throw new Error('未找到会话密钥')
+  }
+  return sendMessageCardV2(header, content)
+}
+
+export async function sendMessageCardV3(type: '新会话' | '回信', sessionId: string, content: string): Promise<any> {
+  const header = `${type}#${sessionId}`
+  return sendMessageCardV2(header, content)
 }
 
 export async function sendMessageCardV2(header: string, content: string): Promise<any> {

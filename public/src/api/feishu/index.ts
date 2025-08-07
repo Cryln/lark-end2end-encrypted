@@ -3,6 +3,8 @@
  * 用于在应用启动时初始化飞书相关功能
  */
 
+import CacheService from '../../utils/cache';
+
 declare global {
   interface Window {
     h5sdk: any;
@@ -14,7 +16,7 @@ declare global {
 export { getBlockActionSourceDetail } from './messageDetail';
 
 // 导入发送消息卡片的函数
-export { sendMessageCard, sendMessageCardV2 } from './sendMessageCard';
+export { sendMessageCard, sendMessageCardV3 } from './sendMessageCard';
 
 /**
  * 初始化飞书API
@@ -42,6 +44,43 @@ async function getJsapiSignature(url: string): Promise<any> {
 }
 
 /**
+ * 注册飞书用户公钥
+ * @param openId 飞书用户ID
+ * @param pubKey 公钥
+ */
+export async function register(openId: string, pubKey: string) {
+  return fetch('/kv', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      key: openId,
+      value: pubKey,
+    }),
+  })
+}
+
+/**
+ * 获取飞书用户公钥
+ * @param openId 飞书用户ID
+ * @returns 公钥
+ */
+export async function getPubKey(openId: string): Promise<string | undefined> {
+  const response = await fetch('/kv', {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      key: openId,
+    }),
+  })
+  const data = await response.json()
+  return data.data
+}
+
+/**
  * 初始化飞书SDK
  * 负责获取JSAPI签名并配置SDK
  * @returns 配置是否成功
@@ -57,7 +96,6 @@ export async function initSdk(): Promise<boolean> {
       // 获取JSAPI签名
       const signature = await getJsapiSignature(currentUrl);
       console.log(`[initSdk] 获取JSAPI签名成功, sig: ${JSON.stringify(signature)}`);
-
       // 配置飞书SDK
       return new Promise((resolve, reject) => {
         if (window.h5sdk) {
@@ -70,6 +108,7 @@ export async function initSdk(): Promise<boolean> {
               'getBlockActionSourceDetail',
               'sendMessageCard',
               'showToast',
+              'requestAccess',
             ],
             onSuccess: (res: any) => {
               console.log(`[initSdk] 飞书SDK配置成功: ${JSON.stringify(res)}`);

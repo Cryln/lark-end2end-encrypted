@@ -1,6 +1,6 @@
 import { Router } from 'itty-router';
 import { handlePostConfig, handleGetConfig } from '../controller/config.controller';
-import { handleRefreshFeishuToken, handleGetJsapiSignature } from '../controller/feishu.controller';
+import { handleRefreshFeishuToken, handleGetJsapiSignature, handleGetUserInfoByCode } from '../controller/feishu.controller';
 
 // 创建路由实例
 const router = Router();
@@ -17,6 +17,7 @@ router
   // 飞书API路由
   .post('/feishu/refresh-token', handleRefreshFeishuToken)
   .get('/feishu/jsapi-signature', handleGetJsapiSignature)
+  .get('/feishu/user-info', handleGetUserInfoByCode)
 
   // 404路由
   .all('*', () => new Response(JSON.stringify({

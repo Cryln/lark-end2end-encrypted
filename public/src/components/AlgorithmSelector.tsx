@@ -17,6 +17,7 @@ const AlgorithmSelector: React.FC<AlgorithmSelectorProps> = ({ value, onChange }
       <select
         id="algorithm"
         value={value}
+        disabled={true}
         onChange={(e) => onChange(e.target.value)}
         className="px-3 py-2 border border-white/20 rounded-md bg-white/10 text-white"
       >

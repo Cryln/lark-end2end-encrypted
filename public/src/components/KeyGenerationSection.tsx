@@ -1,9 +1,8 @@
 import React, { useEffect } from 'react';
 import AlgorithmSelector from './AlgorithmSelector';
 import KeyDisplay from './KeyDisplay';
-import Cache from '../utils/cache';
-import { generateKeyPair } from '../crypto/keyGeneration';
-import { arrayBufferToBase64 } from '../utils/convert';
+import CacheService from '../utils/cache';
+// import { generateKeyPair } from '../crypto/keyGeneration';
 
 interface KeyGenerationSectionProps {
   algorithm: string;
@@ -30,45 +29,45 @@ const KeyGenerationSection: React.FC<KeyGenerationSectionProps> = ({
   symmetricKey,
   setSymmetricKey,
 }) => {
-  const negotiateKey = async () => {
-    try {
-      // 生成16字节的随机密钥 (AES-128)
-      const keyBuffer = new Uint8Array(16);
-      window.crypto.getRandomValues(keyBuffer);
-      const symmetricKey = arrayBufferToBase64(keyBuffer.buffer);
-      setSymmetricKey(symmetricKey);
-    } catch (error) {
-      console.error('密钥协商失败:', error);
-      alert('密钥协商失败: ' + (error as Error).message);
-    }
-  }
+  console.log(symmetricKey)
 
 // 生成密钥对
-  const generateKeys = async () => {
+  // const generateKeys = async () => {
+  //   try {
+  //     setPublicKey('生成中...');
+  //     setPrivateKey('生成中...');
+  //     const { publicKey, privateKey } = await generateKeyPair(algorithm);
+  //     setPublicKey(publicKey);
+  //     setPrivateKey(privateKey);
+  //     CacheService.set("jmj_pub_key", publicKey);
+  //     CacheService.set("jmj_pri_key", privateKey);
+  //   } catch (error) {
+  //     console.error('生成密钥失败:', error);
+  //     alert((error as Error).message);
+  //     setPublicKey('');
+  //     setPrivateKey('');
+  //   }
+  // }
+
+  const clearAll = async () => {
     try {
-      setPublicKey('生成中...');
-      setPrivateKey('生成中...');
-      const { publicKey, privateKey } = await generateKeyPair(algorithm);
-      setPublicKey(publicKey);
-      setPrivateKey(privateKey);
-      Cache.set("jmj_pub_key", publicKey);
-      Cache.set("jmj_pri_key", privateKey);
-    } catch (error) {
-      console.error('生成密钥失败:', error);
-      alert((error as Error).message);
+      CacheService.clear();
       setPublicKey('');
       setPrivateKey('');
+      setSymmetricKey('');
+    } catch (error) {
+      
     }
   }
 
   useEffect(() => {
-    const pubKey = Cache.get<string>("jmj_pub_key");
-    const priKey = Cache.get<string>("jmj_pri_key");
+    const pubKey = CacheService.get<string>("jmj_pub_key");
+    const priKey = CacheService.get<string>("jmj_pri_key");
     if (pubKey != null && priKey != null) {
       setPublicKey(pubKey);
       setPrivateKey(priKey);
     }
-    const symmetricKey = Cache.get<string>("jmj_sym_key");
+    const symmetricKey = CacheService.get<string>("jmj_sym_key");
     if (symmetricKey != null) {
       setSymmetricKey(symmetricKey);
     }
@@ -77,39 +76,20 @@ const KeyGenerationSection: React.FC<KeyGenerationSectionProps> = ({
   return (
     <div className="mb-4 bg-white/5 p-3 rounded border border-white/10">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3">
-        <AlgorithmSelector value={algorithm} onChange={setAlgorithm} />
+        <AlgorithmSelector value={algorithm} onChange={setAlgorithm}/>
 
         <div className="w-full sm:w-auto flex flex-col sm:flex-row gap-2">
           <KeyDisplay label="公钥" value={publicKey} id="publicKey" />
           <KeyDisplay label="私钥" value={privateKey} id="privateKey" />
 
           <button
-            onClick={generateKeys}
-            disabled={publicKey != "" && privateKey != ""}
+            onClick={clearAll}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors duration-300"
           >
-            生成
+            一键清空
           </button>
         </div>
       </div>
-
-      <div className="mb-3">
-        <label htmlFor="symmetricKey" className="block text-white font-medium mb-2">对称加密密钥</label>
-        <input
-          id="symmetricKey"
-          value={symmetricKey}
-          readOnly
-          className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-md text-white placeholder-white/50"
-          placeholder="协商后将显示对称加密密钥..."
-        />
-      </div>
-      <button
-        onClick={negotiateKey}
-        disabled={symmetricKey != ""}
-        className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors duration-300"
-      >
-        协商加密key
-      </button>
     </div>
   );
 };
