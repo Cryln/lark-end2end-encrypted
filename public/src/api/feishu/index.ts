@@ -65,14 +65,11 @@ export async function register(openId: string, pubKey: string) {
  * @returns 公钥
  */
 export async function getPubKey(openId: string): Promise<string | undefined> {
-  const response = await fetch('/kv', {
+  const response = await fetch(`/kv?key=${openId}`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      key: openId,
-    }),
+    }
   })
   const data = await response.json()
   return data.data

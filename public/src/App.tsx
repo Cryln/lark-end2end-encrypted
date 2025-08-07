@@ -82,6 +82,8 @@ function App() {
           setSessionId={setSessionId}
           symmetricKey={symmetricKey}
           setSymmetricKey={setSymmetricKey}
+          publicKey={publicKey}
+          setPublicKey={setPublicKey}
           outgoingMessage={outgoingMessage}
           setOutgoingMessage={setOutgoingMessage}
           incomingMessage={incomingMessage}
@@ -92,6 +94,8 @@ function App() {
 
         {/* 加密功能区域 */}
         <EncryptionSection
+          publicKey={publicKey}
+          privateKey={privateKey}
           plaintext={plaintext}
           setPlaintext={setPlaintext}
           ciphertext={ciphertext}

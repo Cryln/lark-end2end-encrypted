@@ -1,6 +1,7 @@
 import { SUPPORTED_ALGORITHMS, ERROR_MESSAGES } from '../constants/algorithms';
 import type { SupportedAlgorithmConfig } from '../constants/types';
 import { arrayBufferToBase64, base64ToArrayBuffer } from '../utils/convert';
+import { logError } from '../components/LogDisplay';
 
 
 /**
@@ -48,7 +49,7 @@ async function generateKeyPair(algorithm: string): Promise<{ publicKey: string; 
 
     return { publicKey, privateKey };
   } catch (error) {
-    console.error('生成密钥失败:', error);
+    logError(`生成密钥对失败: ${(error as Error).message}`);
     throw new Error(ERROR_MESSAGES.KEY_GENERATION_FAILED + (error as Error).message);
   }
 }

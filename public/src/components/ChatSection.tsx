@@ -4,7 +4,7 @@ import { arrayBufferToBase64 } from '../utils/convert';
 import CacheService from '../utils/cache';
 import { ChatContext, getChatMessage } from '../constants/types';
 import { log } from './LogDisplay';
-import { getBlockActionSourceDetail, getPubKey, getUserInfo } from '../api/feishu';
+import { getBlockActionSourceDetail, getPubKey, getUserInfo, register } from '../api/feishu';
 import { newMessageCard } from '../api/feishu/sendMessageCard';
 import { requestAccess } from '../api/feishu/requestAccess';
 
@@ -24,6 +24,8 @@ interface ChatSectionProps {
   setSessionId: (sessionId: string) => void;
   symmetricKey: string;
   setSymmetricKey: (symmetricKey: string) => void;
+  publicKey: string;
+  setPublicKey: (publicKey: string) => void;
   outgoingMessage: string;
   setOutgoingMessage: (text: string) => void;
   incomingMessage: string;
@@ -43,6 +45,7 @@ const ChatSection: React.FC<ChatSectionProps> = ({
   setSessionId,
   symmetricKey,
   setSymmetricKey,
+  publicKey,
   incomingMessage,
   setIncomingMessage,
   outgoingMessage,
@@ -64,14 +67,6 @@ const ChatSection: React.FC<ChatSectionProps> = ({
         }
         chatContext.setMyOpenId(userInfo.data.open_id)
 
-        // 查询用户公钥
-        const publicKey = await getPubKey(userInfo.data.open_id)
-        log(`[ChatSection]获取用户公钥: ${publicKey}`)
-        if (!publicKey) {
-          throw new Error('获取用户公钥失败')
-        }
-
-
         const messageDetail = await getBlockActionSourceDetail();
         if (messageDetail && messageDetail.content && messageDetail.content.messages.length > 0) {
           const msg = messageDetail.content.messages[0]
@@ -79,12 +74,20 @@ const ChatSection: React.FC<ChatSectionProps> = ({
           chatContext.setFriendOpenId(msg.sender.open_id)
           chatContext.setTriggerMessage(msg)
         } else {
-          showToast('获取消息失败: 消息详情格式错误', 'error');
+          throw new Error('获取消息失败: 消息详情格式错误')
         }
+
+        // 查询用户公钥
+        const pubKey = await getPubKey(userInfo.data.open_id)
+        log(`[ChatSection]获取用户公钥: ${pubKey}`)
+        log(`[ChatSection]pubKey: ${pubKey}, publicKey: ${publicKey}`)
+        if ((!pubKey || pubKey != publicKey) && publicKey != '') {
+          await register(chatContext.myOpenId!, publicKey)
+        }
+
       } catch (err) {
         showToast('获取消息失败: ' + (err instanceof Error ? err.message : String(err)), 'error');
       }
-      showToast('加载来信中...', 'info')
       log(`[ChatSection]触发来信: ${chatContext.triggerMessage}`)
       try {
         // sessionId
@@ -99,7 +102,7 @@ const ChatSection: React.FC<ChatSectionProps> = ({
       }
     }
     fetchMessages();
-  }, [chatContext, setIncomingMessage]);
+  }, [chatContext, setIncomingMessage, publicKey]);
 
   // 处理发送消息
   const handleSendMessage = async () => {

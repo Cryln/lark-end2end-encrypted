@@ -7,7 +7,7 @@ const ALGORITHM_METADATA: Record<string, Omit<AlgorithmConfig, 'supported'> & { 
     name: 'RSA',
     description: 'RSA算法是一种非对称加密算法，广泛用于安全数据传输',
     defaultGenerateOptions: {
-      name: 'RSASSA-PKCS1-v1_5',
+      name: 'RSA-OAEP',
       modulusLength: 2048,
       publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
       hash: 'SHA-256'

@@ -1,8 +1,12 @@
 import React from 'react';
 import { ERROR_MESSAGES } from '../constants/algorithms';
 import { arrayBufferToBase64, base64ToArrayBuffer } from '../utils/convert';
+import { decrypt, encrypt } from '../crypto/keyGeneration';
+import { log } from './LogDisplay';
 
 interface EncryptionSectionProps {
+  publicKey: string;
+  privateKey: string;
   plaintext: string;
   setPlaintext: (text: string) => void;
   ciphertext: string;
@@ -15,6 +19,8 @@ interface EncryptionSectionProps {
  * 包含原文输入、加密按钮、密文显示和发送按钮
  */
 const EncryptionSection: React.FC<EncryptionSectionProps> = ({
+  publicKey,
+  privateKey,
   plaintext,
   setPlaintext,
   ciphertext,
@@ -28,8 +34,21 @@ const EncryptionSection: React.FC<EncryptionSectionProps> = ({
       alert(ERROR_MESSAGES.EMPTY_PLAINTEXT)
       return
     }
-    if (!symmetricKey) {
-      setCiphertext(plaintext)
+    // if (!symmetricKey) {
+    //   setCiphertext(plaintext)
+    //   return
+    // }
+    const src = plaintext
+    let dst = ''
+    log(`[加密]publicKey:${publicKey};privateKey:${privateKey}`)
+    if (publicKey != '') {
+      dst = await encrypt(src, publicKey, 'rsa')
+      log(`[加密]密文：${dst}`)
+    }
+    if (privateKey != '') {
+      const dst2 = await decrypt(dst, privateKey, 'rsa')
+      log(`[加密]原文：${dst2}`)
+      setCiphertext(dst+ '\n' + dst2)
       return
     }
 

@@ -2,7 +2,8 @@ import React, { useEffect } from 'react';
 import AlgorithmSelector from './AlgorithmSelector';
 import KeyDisplay from './KeyDisplay';
 import CacheService from '../utils/cache';
-// import { generateKeyPair } from '../crypto/keyGeneration';
+import { generateKeyPair } from '../../src/crypto/keyGeneration';
+import { logError } from './LogDisplay';
 
 interface KeyGenerationSectionProps {
   algorithm: string;
@@ -32,22 +33,22 @@ const KeyGenerationSection: React.FC<KeyGenerationSectionProps> = ({
   console.log(symmetricKey)
 
 // 生成密钥对
-  // const generateKeys = async () => {
-  //   try {
-  //     setPublicKey('生成中...');
-  //     setPrivateKey('生成中...');
-  //     const { publicKey, privateKey } = await generateKeyPair(algorithm);
-  //     setPublicKey(publicKey);
-  //     setPrivateKey(privateKey);
-  //     CacheService.set("jmj_pub_key", publicKey);
-  //     CacheService.set("jmj_pri_key", privateKey);
-  //   } catch (error) {
-  //     console.error('生成密钥失败:', error);
-  //     alert((error as Error).message);
-  //     setPublicKey('');
-  //     setPrivateKey('');
-  //   }
-  // }
+  const generateKeys = async () => {
+    try {
+      setPublicKey('生成中...');
+      setPrivateKey('生成中...');
+      const { publicKey, privateKey } = await generateKeyPair(algorithm);
+      setPublicKey(publicKey);
+      setPrivateKey(privateKey);
+      CacheService.set("jmj_pub_key", publicKey);
+      CacheService.set("jmj_pri_key", privateKey);
+    } catch (error) {
+      logError(`生成密钥对失败: ${(error as Error).message}`);
+      alert((error as Error).message);
+      setPublicKey('');
+      setPrivateKey('');
+    }
+  }
 
   const clearAll = async () => {
     try {
@@ -66,6 +67,8 @@ const KeyGenerationSection: React.FC<KeyGenerationSectionProps> = ({
     if (pubKey != null && priKey != null) {
       setPublicKey(pubKey);
       setPrivateKey(priKey);
+    } else {
+      generateKeys()
     }
     const symmetricKey = CacheService.get<string>("jmj_sym_key");
     if (symmetricKey != null) {
