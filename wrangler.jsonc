@@ -61,6 +61,12 @@
 		"directory": "./public/dist/",
 		"binding": "ASSETS"
 	},
+	"routes": [
+    {
+      "pattern": "lark.orcax.net",
+      "custom_domain": true
+    }
+  ]
 	/**
 	 * Service Bindings (communicate between multiple Workers)
 	 * https://developers.cloudflare.com/workers/wrangler/configuration/#service-bindings
