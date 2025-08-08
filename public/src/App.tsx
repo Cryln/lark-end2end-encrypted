@@ -24,7 +24,6 @@ function App() {
   const [plaintext, setPlaintext] = useState('')
   const [outgoingMessage, setOutgoingMessage] = useState('')
   const [incomingMessage, setIncomingMessage] = useState('')
-  const [sessionId, setSessionId] = useState('')
 
   const [ciphertext, setCiphertext] = useState('')
   const [symmetricKey, setSymmetricKey] = useState('')
@@ -38,24 +37,6 @@ function App() {
   useEffect(() => {
     
   }, [chatContext]);
-
-
-  // 模拟加载来信数据
-  const loadIncomingMessage = async () => {
-    // 模拟网络延迟
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    // 模拟返回的数据
-    return '这是一条模拟的来信内容，您可以在这里查看收到的消息。';
-  };
-
-  // 模拟发送回信数据
-  const sendOutgoingMessage = async (message: string) => {
-    // 模拟网络延迟
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    // 这里只是模拟发送，实际项目中会调用API
-    console.log('发送回信:', message);
-  };
-  // const [openChatId, setOpenChatId] = useState('')
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 p-4 flex flex-col items-center justify-center font-sans text-white">
@@ -78,45 +59,42 @@ function App() {
          {/* 对话区域 */}
         <ChatSection
           chatContext={chatContext}
-          sessionId={sessionId}
-          setSessionId={setSessionId}
-          symmetricKey={symmetricKey}
-          setSymmetricKey={setSymmetricKey}
           publicKey={publicKey}
-          setPublicKey={setPublicKey}
+          privateKey={privateKey}
           outgoingMessage={outgoingMessage}
           setOutgoingMessage={setOutgoingMessage}
           incomingMessage={incomingMessage}
           setIncomingMessage={setIncomingMessage}
-          loadIncomingMessage={loadIncomingMessage}
-          sendOutgoingMessage={sendOutgoingMessage}
         />
 
-        {/* 加密功能区域 */}
-        <EncryptionSection
-          publicKey={publicKey}
-          privateKey={privateKey}
-          plaintext={plaintext}
-          setPlaintext={setPlaintext}
-          ciphertext={ciphertext}
-          setCiphertext={setCiphertext}
-          symmetricKey={symmetricKey}
-        />
+        <div className="debug border-2 border-red-500 p-4 mb-4">
+          <label className="block text-white font-medium mb-2">debug on</label>
+          {/* 加密功能区域 */}
+          <EncryptionSection
+            publicKey={publicKey}
+            privateKey={privateKey}
+            plaintext={plaintext}
+            setPlaintext={setPlaintext}
+            ciphertext={ciphertext}
+            setCiphertext={setCiphertext}
+            symmetricKey={symmetricKey}
+          />
 
-        {/* 协议测试区域 */}
-        <ProtocolTestSection
-          protocolMessage={protocolMessage}
-          setProtocolMessage={setProtocolMessage}
-          router={router}
-          publicKey={publicKey}
-          symmetricKey={symmetricKey}
-        />
+          {/* 协议测试区域 */}
+          <ProtocolTestSection
+            protocolMessage={protocolMessage}
+            setProtocolMessage={setProtocolMessage}
+            router={router}
+            publicKey={publicKey}
+            symmetricKey={symmetricKey}
+          />
 
-        {/* 消息显示区域 */}
-        <MessageDisplay />
+          {/* 消息显示区域 */}
+          <MessageDisplay />
 
-        {/* 日志显示区域 */}
-        <LogDisplay />
+          {/* 日志显示区域 */}
+          <LogDisplay />
+        </div>
       </div>
     </div>
   )

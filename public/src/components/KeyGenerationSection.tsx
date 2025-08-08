@@ -70,10 +70,6 @@ const KeyGenerationSection: React.FC<KeyGenerationSectionProps> = ({
     } else {
       generateKeys()
     }
-    const symmetricKey = CacheService.get<string>("jmj_sym_key");
-    if (symmetricKey != null) {
-      setSymmetricKey(symmetricKey);
-    }
   }, []);
 
   return (

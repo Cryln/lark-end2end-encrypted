@@ -136,7 +136,7 @@ async function encrypt(data: string, publicKey: string, algorithm: string): Prom
 
     return arrayBufferToBase64(encryptedBuffer);
   } catch (error) {
-    console.error('加密失败:', error);
+    logError(`加密失败: ${(error as Error).message}`);
     throw new Error(ERROR_MESSAGES.ENCRYPTION_FAILED + (error as Error).message);
   }
 }
@@ -168,4 +168,53 @@ async function decrypt(encryptedData: string, privateKey: string, algorithm: str
   }
 }
 
-export { generateKeyPair, encrypt, decrypt };
+function genSymmetricKey(): string {
+  const keyBuffer = new Uint8Array(16);
+  window.crypto.getRandomValues(keyBuffer);
+  const symmetricKey = arrayBufferToBase64(keyBuffer.buffer);
+  return symmetricKey;
+}
+
+// AES 加密
+async function encryptAES(data: string, key: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const dataBuffer = encoder.encode(data);
+  const keyBuffer = base64ToArrayBuffer(key);
+  const cryptoKey = await window.crypto.subtle.importKey(
+    'raw',
+    keyBuffer,
+    { name: 'AES-CBC' },
+    false,
+    ['encrypt']
+  );
+  const iv = window.crypto.getRandomValues(new Uint8Array(16));
+  const encryptedBuffer = await window.crypto.subtle.encrypt(
+    { name: 'AES-CBC', iv: iv },
+    cryptoKey,
+    dataBuffer
+  );
+  const combined = new Uint8Array([...iv, ...new Uint8Array(encryptedBuffer)]);
+  return arrayBufferToBase64(combined.buffer);
+}
+
+// AES 解密
+async function decryptAES(encryptedData: string, key: string): Promise<string> {
+  const encryptedBuffer = base64ToArrayBuffer(encryptedData);
+  const iv = encryptedBuffer.slice(0, 16);
+  const cryptoKey = await window.crypto.subtle.importKey(
+    'raw',
+    base64ToArrayBuffer(key),
+    { name: 'AES-CBC' },
+    false,
+    ['decrypt']
+  );
+  const decryptedBuffer = await window.crypto.subtle.decrypt(
+    { name: 'AES-CBC', iv: iv },
+    cryptoKey,
+    encryptedBuffer.slice(16)
+  );
+  const decoder = new TextDecoder();
+  return decoder.decode(decryptedBuffer);
+}
+
+export { generateKeyPair, encrypt, decrypt, genSymmetricKey, encryptAES, decryptAES };

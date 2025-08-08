@@ -17,6 +17,8 @@ export class ChatContext {
   myOpenId?: string;
   friendOpenId?: string;
   triggerMessage?: LarkMessage;
+  sessionId?: string;
+  symmetricKey?: string;
 
   constructor() {
     this.openChatId = '';
@@ -32,6 +34,12 @@ export class ChatContext {
   }
   setTriggerMessage(triggerMessage?: LarkMessage) {
     this.triggerMessage = triggerMessage;
+  }
+  setSessionId(sessionId?: string) {
+    this.sessionId = sessionId;
+  }
+  setSymmetricKey(symmetricKey?: string) {
+    this.symmetricKey = symmetricKey;
   }
 }
 

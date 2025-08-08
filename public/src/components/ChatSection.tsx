@@ -1,38 +1,22 @@
 import React, { useEffect } from 'react';
 import { showToast } from '../api/feishu/showToast';
-import { arrayBufferToBase64 } from '../utils/convert';
-import CacheService from '../utils/cache';
-import { ChatContext, getChatMessage } from '../constants/types';
+import { ChatContext, ChatMessage, getChatMessage } from '../constants/types';
 import { log } from './LogDisplay';
 import { getBlockActionSourceDetail, getPubKey, getUserInfo, register } from '../api/feishu';
-import { newMessageCard } from '../api/feishu/sendMessageCard';
+import { newMessageCard, replyMessageCard } from '../api/feishu/sendMessageCard';
 import { requestAccess } from '../api/feishu/requestAccess';
-
-// // 模拟消息类型定义
-// interface Message {
-//   id: string;
-//   content: string;
-//   type: 'incoming' | 'outgoing';
-//   timestamp: Date;
-// }
-
+import { decrypt, decryptAES, encryptAES, genSymmetricKey } from '../crypto/keyGeneration';
+import CacheService from '../utils/cache';
 
 interface ChatSectionProps {
   // 从App.tsx传递的状态
   chatContext: ChatContext;
-  sessionId: string;
-  setSessionId: (sessionId: string) => void;
-  symmetricKey: string;
-  setSymmetricKey: (symmetricKey: string) => void;
   publicKey: string;
-  setPublicKey: (publicKey: string) => void;
+  privateKey: string;
   outgoingMessage: string;
   setOutgoingMessage: (text: string) => void;
   incomingMessage: string;
   setIncomingMessage: (text: string) => void;
-  // 模拟加载数据的方法
-  loadIncomingMessage: () => Promise<string>;
-  sendOutgoingMessage: (message: string) => Promise<void>;
 }
 
 /**
@@ -41,17 +25,75 @@ interface ChatSectionProps {
  */
 const ChatSection: React.FC<ChatSectionProps> = ({
   chatContext,
-  sessionId,
-  setSessionId,
-  symmetricKey,
-  setSymmetricKey,
   publicKey,
+  privateKey,
   incomingMessage,
   setIncomingMessage,
   outgoingMessage,
   setOutgoingMessage,
-  sendOutgoingMessage,
 }) => {
+
+  const setSymmetricKeyWrapper = (key: string) => {
+    log(`[ChatSection]setSymmetricKeyWrapper: ${key}`)
+    if (!key) {
+      return
+    }
+    chatContext.setSymmetricKey(key)
+    CacheService.set(chatContext.sessionId!, key)
+  }
+
+  const setMessageCard = async (chatMsg: ChatMessage) => {
+    log(`[ChatSection]setMessageCard: ${JSON.stringify(chatMsg)}`)
+    const title = `${chatMsg.messageType}#${chatMsg.sessionId}`
+    let content = chatMsg.content
+    if (chatMsg.messageType === '新会话') {
+      content = await decrypt(content, privateKey, 'rsa')
+      setSymmetricKeyWrapper(content)
+      content = "会话密钥：" + content
+    } else if (chatMsg.messageType === '回信') {
+      content = await decryptAES(content, chatContext.symmetricKey!)
+    }
+    setIncomingMessage(title + '\n' + content)
+  }
+
+  // 处理发送消息
+  const handleSendMessage = async () => {
+    if (!outgoingMessage) {
+      showToast('请输入回信内容', 'error');
+      return;
+    }
+
+    try {
+      const encrypted = await encryptAES(outgoingMessage, chatContext.symmetricKey!)
+      await replyMessageCard(chatContext.sessionId!, encrypted);
+      // 发送成功后清空输入框
+      setOutgoingMessage('');
+      showToast('回信发送成功', 'success');
+    } catch (error) {
+      showToast('发送回信失败: ' + (error as Error).message, 'error');
+    }
+  };
+
+  const startNewSession = async () => {
+    // 生成一个UUID
+    const newsessionId = crypto.randomUUID();
+    const key = genSymmetricKey();
+    try {
+      if (!chatContext.friendOpenId) {
+        throw new Error('未找到好友OpenID')
+      }
+      await newMessageCard(newsessionId, chatContext.friendOpenId, key)
+    } catch (error) {
+      showToast('创建新会话失败: ' + (error as Error).message, 'error');
+      return
+    }
+    chatContext.setSessionId(newsessionId)
+    setSymmetricKeyWrapper(key);
+    setIncomingMessage('');
+    setOutgoingMessage('');
+    showToast('新会话创建成功', 'success');
+  }
+
   // 组件初始化时加载来信
   useEffect(() => {
     async function fetchMessages() {
@@ -90,11 +132,17 @@ const ChatSection: React.FC<ChatSectionProps> = ({
       }
       log(`[ChatSection]触发来信: ${chatContext.triggerMessage}`)
       try {
-        // sessionId
+        // chatContext.sessionId!
         const message = chatContext.triggerMessage
         const chatMessage = getChatMessage(message)
         if (chatMessage) {
-          setIncomingMessage(`[${chatMessage.messageType}|${chatMessage.sessionId}] ${chatMessage.content}`)
+          chatContext.setSessionId(chatMessage.sessionId)
+          const key = CacheService.get<string>(chatMessage.sessionId)
+          log(`[ChatSection]获取会话密钥: ${key}`)
+          if (key) {
+            setSymmetricKeyWrapper(key)
+          }
+          setMessageCard(chatMessage)
         }
 
       } catch (error) {
@@ -104,55 +152,17 @@ const ChatSection: React.FC<ChatSectionProps> = ({
     fetchMessages();
   }, [chatContext, setIncomingMessage, publicKey]);
 
-  // 处理发送消息
-  const handleSendMessage = async () => {
-    if (!outgoingMessage.trim()) {
-      showToast('请输入回信内容', 'error');
-      return;
-    }
-
-    try {
-      await sendOutgoingMessage(outgoingMessage);
-      // 发送成功后清空输入框
-      setOutgoingMessage('');
-      showToast('回信发送成功', 'success');
-    } catch (error) {
-      showToast('发送回信失败: ' + (error as Error).message, 'error');
-    }
-  };
-
-  const startNewSession = async () => {
-    // 生成一个UUID
-    const newSessionId = crypto.randomUUID();
-    const key = genSymmetricKey();
-    try {
-      if (!chatContext.friendOpenId) {
-        throw new Error('未找到好友OpenID')
-      }
-      await newMessageCard(newSessionId, chatContext.friendOpenId, key)
-    } catch (error) {
-      showToast('创建新会话失败: ' + (error as Error).message, 'error');
-      return
-    }
-    setSessionId(newSessionId);
-    setSymmetricKey(key);
-    setIncomingMessage('');
-    setOutgoingMessage('');
-    showToast('新会话创建成功', 'success');
-    CacheService.set(newSessionId, symmetricKey);
-  }
 
   return (
     <div className="space-y-6 p-4 border border-white/20 rounded-lg bg-white/5 mb-6">
       <h2 className="text-xl font-semibold text-center mb-4">对话区</h2>
 
       <div>
-        <textarea
-          value={sessionId}
-          onChange={() => { }}
-          className="w-full p-4 border border-green-300 rounded-md bg-green-900/30 text-white min-h-[100px]"
-          placeholder="对话ID"
-        ></textarea>
+        <div
+          className="w-full p-4 border border-white-300 rounded-md bg-white-900/30 text-white"
+        >
+          {chatContext.sessionId! + ':' + chatContext.symmetricKey || 'null'}
+        </div>
         <button
           onClick={startNewSession}
           disabled={false}
@@ -175,12 +185,13 @@ const ChatSection: React.FC<ChatSectionProps> = ({
         <textarea
           value={outgoingMessage}
           onChange={(e) => setOutgoingMessage(e.target.value)}
+          disabled={!chatContext.friendOpenId || !chatContext.sessionId!}
           className="w-full p-4 border border-green-300 rounded-md bg-green-900/30 text-white min-h-[100px]"
-          placeholder="请输入回信内容..."
+          placeholder={!chatContext.friendOpenId || !chatContext.sessionId! ? '请选择好友消息回复' : '请输入回信内容...'}
         ></textarea>
         <button
           onClick={handleSendMessage}
-          disabled={false}
+          disabled={!chatContext.symmetricKey}
           className={`mt-2 px-4 py-2 rounded-md transition-colors duration-300 ${false ? 'bg-gray-500 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'}`}
         >
           {false ? '发送中...' : '发送'}
@@ -191,11 +202,3 @@ const ChatSection: React.FC<ChatSectionProps> = ({
 };
 
 export default ChatSection;
-
-
-function genSymmetricKey(): string {
-  const keyBuffer = new Uint8Array(16);
-  window.crypto.getRandomValues(keyBuffer);
-  const symmetricKey = arrayBufferToBase64(keyBuffer.buffer);
-  return symmetricKey;
-}

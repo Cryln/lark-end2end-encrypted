@@ -1,3 +1,5 @@
+import { log } from "../components/LogDisplay";
+
 /**
  * 基于localStorage的缓存工具
  * 提供全局缓存管理功能
@@ -10,6 +12,7 @@ const CacheService = {
    * @param expire 过期时间(毫秒)，可选
    */
   set<T>(key: string, value: T, expire?: number): void {
+    log(`[CacheService] 设置缓存项, key: ${key}, value: ${value}, expire: ${expire}`)
     const data = {
       value,
       expire: expire ? Date.now() + expire : null
@@ -24,6 +27,7 @@ const CacheService = {
    */
   get<T>(key: string): T | null {
     const item = localStorage.getItem(key);
+    log(`[CacheService] 获取缓存项, key: ${key}, item: ${item}`)
     if (!item) return null;
 
     try {
