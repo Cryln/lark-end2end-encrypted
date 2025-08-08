@@ -4,7 +4,6 @@ import { ChatContext, ChatMessage, getChatMessage } from '../constants/types';
 import { log } from './LogDisplay';
 import { getBlockActionSourceDetail, getPubKey, getUserInfo, register } from '../api/feishu';
 import { newMessageCard, replyMessageCard } from '../api/feishu/sendMessageCard';
-import { requestAccess } from '../api/feishu/requestAccess';
 import { decrypt, decryptAES, encryptAES, genSymmetricKey } from '../crypto/keyGeneration';
 import CacheService from '../utils/cache';
 
@@ -98,11 +97,8 @@ const ChatSection: React.FC<ChatSectionProps> = ({
   useEffect(() => {
     async function fetchMessages() {
       try {
-        const accessResp = await requestAccess({
-          scopeList: [],
-        })
         // 查询用户信息
-        const userInfo = await getUserInfo(accessResp.code, location.href.split('?')[0].split('#')[0])
+        const userInfo = await getUserInfo()
         log(`[ChatSection]获取用户信息: ${JSON.stringify(userInfo)}`)
         if (!userInfo.data || !userInfo.data.open_id) {
           throw new Error('获取用户信息失败')

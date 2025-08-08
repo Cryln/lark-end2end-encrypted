@@ -27,7 +27,14 @@ export { sendMessageCard, sendMessageCardV3 } from './sendMessageCard';
  */
 async function getJsapiSignature(url: string): Promise<any> {
   try {
-    const response = await fetch(`/feishu/jsapi-signature?url=${encodeURIComponent(url)}`);
+    const accessResp = await requestAccess({
+      scopeList: [],
+    })
+    const response = await fetch(`/feishu/jsapi-signature?url=${encodeURIComponent(url)}`, {
+      headers: {
+        'Lark-User-Code': accessResp.code,
+      }
+    });
     const data = await response.json();
     if (data.success) {
       return data.data;
@@ -47,16 +54,32 @@ async function getJsapiSignature(url: string): Promise<any> {
  * @param pubKey 公钥
  */
 export async function register(openId: string, pubKey: string) {
-  return fetch('/kv', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      key: openId,
-      value: pubKey,
-    }),
-  })
+  try {
+    const accessResp = await requestAccess({
+      scopeList: [],
+    })
+    const response = await fetch('/kv', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Lark-User-Code': accessResp.code,
+      },
+      body: JSON.stringify({
+        key: openId,
+        value: pubKey,
+      }),
+    })
+    const data = await response.json()
+    if (data.success) {
+      return data.data
+    } else {
+      console.error(`[register]注册用户公钥失败: ${data.message}`);
+      throw new Error(`注册用户公钥失败: ${data.message}`);
+    }
+  } catch (error) {
+    console.error(`[register]注册用户公钥异常: ${error instanceof Error ? error.message : String(error)}`);
+    throw error;
+  }
 }
 
 /**
@@ -65,14 +88,23 @@ export async function register(openId: string, pubKey: string) {
  * @returns 公钥
  */
 export async function getPubKey(openId: string): Promise<string | undefined> {
-  const response = await fetch(`/kv?key=${openId}`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    }
-  })
-  const data = await response.json()
-  return data.data
+  try {
+    const accessResp = await requestAccess({
+      scopeList: [],
+    })
+    const response = await fetch(`/kv?key=${openId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Lark-User-Code': accessResp.code,
+      }
+    })
+    const data = await response.json()
+    return data.data
+  } catch (error) {
+    console.error(`[getPubKey]获取用户公钥异常: ${error instanceof Error ? error.message : String(error)}`);
+    throw error;
+  }
 }
 
 /**
@@ -82,16 +114,20 @@ export async function getPubKey(openId: string): Promise<string | undefined> {
  * @returns 用户信息
  */
 import { UserInfoResponse } from '@dto/resp/feishu.resp'
-export async function getUserInfo(code: string, redirectUri?: string): Promise<UserInfoResponse> {
+import { requestAccess } from './requestAccess';
+export async function getUserInfo(): Promise<UserInfoResponse> {
   try {
+    const accessResp = await requestAccess({
+          scopeList: [],
+        })
     const response = await fetch('/feishu/user-info', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Lark-User-Code': accessResp.code,
       },
       body: JSON.stringify({
-        code,
-        redirectUri,
+        code: accessResp.code,
       }),
     });
     const data = await response.json();
