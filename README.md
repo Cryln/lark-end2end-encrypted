@@ -1,17 +1,62 @@
 # 飞书端到端加密应用 (lark-end2end-encrypted)
 
-这个项目实现了一个运行在Cloudflare Worker上的飞书应用服务端，提供以下功能：
+这个项目实现了一个运行在Cloudflare Worker上的飞书应用服务端，提供端到端加密通信功能及相关服务支持。
+
+## 核心功能
 
 1. 定时刷新飞书应用的tenant_access_token
 2. 提供JSAPI签名接口，用于前端调用飞书JSAPI
+3. 端到端加密通信支持，包括密钥生成、加密传输和解密功能
+4. 安全会话管理，确保通信双方身份验证和会话安全
 
 ## 项目结构
 
 ```
+├── .editorconfig
+├── .gitignore
+├── .prettierrc
+├── .vscode/
+│   └── settings.json
+├── README.md
+├── package-lock.json
+├── package.json
+├── public/
+│   ├── .gitignore
+│   ├── README.md
+│   ├── eslint.config.js
+│   ├── index.html
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── postcss.config.js
+│   ├── public/
+│   │   └── vite.svg
+│   ├── src/
+│   │   ├── App.css
+│   │   ├── App.tsx
+│   │   ├── api/
+│   │   ├── assets/
+│   │   ├── components/
+│   │   │   ├── ChatSection.tsx
+│   │   │   ├── KeyGenerationSection.tsx
+│   │   │   └── LogDisplay.tsx
+│   │   ├── constants/
+│   │   ├── crypto/
+│   │   ├── index.css
+│   │   ├── main.tsx
+│   │   ├── utils/
+│   │   └── vite-env.d.ts
+│   ├── tailwind.config.js
+│   ├── tsconfig.app.json
+│   ├── tsconfig.json
+│   ├── tsconfig.node.json
+│   └── vite.config.ts
 ├── src/
 │   ├── controller/
 │   │   ├── config.controller.ts
 │   │   └── feishu.controller.ts   # 飞书API控制器
+│   ├── dto/
+│   │   ├── req/
+│   │   └── resp/
 │   ├── service/
 │   │   ├── config.service.ts
 │   │   ├── kv.ts
@@ -19,9 +64,14 @@
 │   ├── routes/
 │   │   └── index.ts              # 路由配置
 │   └── index.ts                  # Worker入口
-├── wrangler.jsonc                # Cloudflare Worker配置
+├── test/
+│   ├── env.d.ts
+│   ├── index.spec.ts
+│   └── tsconfig.json
+├── tsconfig.json
+├── vitest.config.mts
 ├── worker-configuration.d.ts     # 环境变量类型定义
-└── package.json                  # 项目依赖
+└── wrangler.jsonc                # Cloudflare Worker配置
 ```
 
 ## 功能实现
@@ -36,12 +86,28 @@
 - 提供`/feishu/jsapi-signature`接口，接收当前网页URL作为参数
 - 生成飞书JSAPI所需的签名参数（appId、timestamp、nonceStr、signature）
 
+### 3. 端到端加密功能
+
+- 前端实现了密钥生成功能，支持多种加密算法
+- 通信内容通过公钥加密、私钥解密的方式确保安全
+- 会话密钥管理，确保每次会话使用独立密钥
+
+### 4. 安全会话管理
+
+- 基于飞书用户身份认证的会话建立
+- 会话ID和密钥的安全存储和传输
+- 会话过期机制，增强安全性
+
 ## 部署说明
 
 ### 1. 安装依赖
 
 ```bash
 npm install
+# 安装前端依赖
+cd public
+npm install
+cd ..
 ```
 
 ### 2. 设置环境变量
@@ -57,6 +123,17 @@ wrangler secret put FEISHU_APP_SECRET
 
 ```bash
 npm run deploy
+```
+
+### 4. 本地开发
+
+```bash
+# 启动Worker本地开发服务器
+npm run dev
+
+# 启动前端开发服务器
+cd public
+npm run dev
 ```
 
 ## API接口文档
@@ -93,9 +170,19 @@ npm run deploy
   }
   ```
 
+## 前端使用说明
+
+1. 生成密钥对: 在前端界面选择加密算法，点击生成密钥
+2. 分享公钥: 将生成的公钥分享给通信对方
+3. 建立会话: 输入会话ID和对称密钥，开始加密通信
+4. 发送消息: 输入消息内容，系统自动加密并发送
+5. 接收消息: 接收并自动解密对方发送的加密消息
+
 ## 注意事项
 
 1. 确保在飞书开放平台正确配置了应用的回调URL和权限
 2. access_token和jsapi_ticket都有有效期限制，服务端实现了自动刷新机制
 3. 定时触发器配置为每小时执行一次，确保token不会过期
 4. 敏感信息如appId和appSecret通过环境变量传递，不会硬编码在代码中
+5. 密钥保管: 私钥仅存储在本地，请勿泄露给他人
+6. 会话安全: 建议定期更换会话密钥，增强通信安全性

@@ -3,7 +3,7 @@
 	"version": "0.0.0",
 	"private": true,
 	"scripts": {
-		"deploy": "wrangler deploy",
+		"deploy": "cd public && npm run build && cd .. && wrangler deploy",
 		"dev": "wrangler dev",
 		"start": "wrangler dev",
 		"test": "vitest",
@@ -17,8 +17,6 @@
 		"wrangler": "^4.23.0"
 	},
 	"dependencies": {
-		"@larksuiteoapi/node-sdk": "^1.54.0",
-		"itty-router": "^5.0.18",
-		"openid-client": "^6.6.3"
+		"itty-router": "^5.0.18"
 	}
 }
