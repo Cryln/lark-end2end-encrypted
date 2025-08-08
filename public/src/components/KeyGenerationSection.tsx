@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import AlgorithmSelector from './AlgorithmSelector';
 import KeyDisplay from './KeyDisplay';
 import CacheService from '../utils/cache';
@@ -30,6 +30,13 @@ const KeyGenerationSection: React.FC<KeyGenerationSectionProps> = ({
   symmetricKey,
   setSymmetricKey,
 }) => {
+  // 控制组件展开/收起的状态
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // 切换展开/收起状态
+  const toggleExpand = () => {
+    setIsExpanded(!isExpanded);
+  }
   console.log(symmetricKey)
 
 // 生成密钥对
@@ -73,22 +80,38 @@ const KeyGenerationSection: React.FC<KeyGenerationSectionProps> = ({
   }, []);
 
   return (
-    <div className="mb-4 bg-white/5 p-3 rounded border border-white/10">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3">
-        <AlgorithmSelector value={algorithm} onChange={setAlgorithm}/>
-
-        <div className="w-full sm:w-auto flex flex-col sm:flex-row gap-2">
-          <KeyDisplay label="公钥" value={publicKey} id="publicKey" />
-          <KeyDisplay label="私钥" value={privateKey} id="privateKey" />
-
-          <button
-            onClick={clearAll}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors duration-300"
-          >
-            一键清空
-          </button>
-        </div>
+    <div className="mb-4 bg-white/5 rounded border border-white/10 overflow-hidden">
+      {/* 标题栏 - 包含展开/收起按钮 */}
+      <div 
+        className="flex items-center justify-between p-3 cursor-pointer"
+        onClick={toggleExpand}
+      >
+        <h3 className="font-medium text-white">密钥生成区域</h3>
+        <button className="text-white p-1 rounded-full hover:bg-white/10 transition-colors duration-200">
+          {isExpanded ? '▼' : '►'}
+        </button>
       </div>
+
+      {/* 展开内容 */}
+      {isExpanded && (
+        <div className="p-3 pt-0 border-t border-white/10">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3">
+            <AlgorithmSelector value={algorithm} onChange={setAlgorithm}/>
+
+            <div className="w-full sm:w-auto flex flex-col sm:flex-row gap-2">
+              <KeyDisplay label="公钥" value={publicKey} id="publicKey" />
+              <KeyDisplay label="私钥" value={privateKey} id="privateKey" />
+
+              <button
+                onClick={clearAll}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors duration-300"
+              >
+                一键清空
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

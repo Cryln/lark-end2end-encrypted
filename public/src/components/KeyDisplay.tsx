@@ -20,7 +20,7 @@ const KeyDisplay: React.FC<KeyDisplayProps> = ({ label, value, id }) => {
         id={id}
         value={value}
         readOnly
-        className="w-full px-3 py-2 border border-white/20 rounded-md bg-white/10 text-white h-[80px] overflow-auto"
+        className="w-full px-3 py-2 border border-white/20 rounded-md bg-white/10 text-white h-[40px] overflow-auto"
         placeholder={`生成的${label.toLowerCase()}将显示在这里...`}
       ></textarea>
     </div>

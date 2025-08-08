@@ -37,7 +37,7 @@ function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 p-4 flex flex-col items-center justify-center font-sans text-white">
       <div className="w-full max-w-2xl bg-white/10 backdrop-blur-md p-6 rounded-lg shadow-lg border border-white/20">
-        <h1 className="text-2xl font-bold text-center mb-6 text-white">加密工具</h1>
+        <h1 className="text-2xl font-bold text-center mb-6 text-white">加密通话</h1>
 
 
         {/* 密钥生成区域 */}
@@ -63,7 +63,9 @@ function App() {
           setIncomingMessage={setIncomingMessage}
         />
 
-        <div className="debug border-2 border-red-500 p-4 mb-4">
+        <div className="debug border-2 border-red-500 p-4 mb-4"
+        hidden={!import.meta.env.DEBUG}
+        >
           <label className="block text-white font-medium mb-2">debug on</label>
           {/* 加密功能区域 */}
           <EncryptionSection

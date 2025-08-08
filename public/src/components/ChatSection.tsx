@@ -154,11 +154,13 @@ const ChatSection: React.FC<ChatSectionProps> = ({
       <h2 className="text-xl font-semibold text-center mb-4">对话区</h2>
 
       <div>
-        <div
-          className="w-full p-4 border border-white-300 rounded-md bg-white-900/30 text-white"
-        >
-          {chatContext.sessionId! + ':' + chatContext.symmetricKey || 'null'}
-        </div>
+        <textarea
+          className="w-full p-4 border border-blue-300 rounded-md bg-blue-900/30 text-white min-h-[100px]"
+          readOnly
+          value={`会话ID：${chatContext.sessionId!}\n密钥：${chatContext.symmetricKey || 'null'}`}
+          placeholder="会话ID:密钥"
+          rows={2}
+        ></textarea>
         <button
           onClick={startNewSession}
           disabled={false}
@@ -170,9 +172,13 @@ const ChatSection: React.FC<ChatSectionProps> = ({
       {/* 来信区域 */}
       <div>
         <label className="block text-white font-medium mb-2">来信</label>
-        <div className="w-full p-4 border border-blue-300 rounded-md bg-blue-900/30 text-white min-h-[100px]">
-          {incomingMessage}
-        </div>
+        <textarea
+          className="w-full p-4 border border-blue-300 rounded-md bg-blue-900/30 text-white min-h-[100px]"
+          readOnly
+          value={incomingMessage}
+          placeholder="来信"
+          rows={2}
+        ></textarea>
       </div>
 
       {/* 回信区域 */}
