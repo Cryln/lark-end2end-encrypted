@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react';
 import { ERROR_MESSAGES } from './constants/algorithms';
-import { ProtocolRouter, createDefaultRouter } from './crypto/protocol';
 import KeyGenerationSection from './components/KeyGenerationSection';
 import ChatSection from './components/ChatSection';
 import EncryptionSection from './components/EncryptionSection';
-import ProtocolTestSection from './components/ProtocolTestSection';
 import MessageDisplay from './components/MessageDisplay';
 import { LogDisplay } from './components/LogDisplay';
 import { ChatContext } from './constants/types';
@@ -27,8 +25,6 @@ function App() {
 
   const [ciphertext, setCiphertext] = useState('')
   const [symmetricKey, setSymmetricKey] = useState('')
-  const [protocolMessage, setProtocolMessage] = useState('')
-  const [router] = useState<ProtocolRouter>(createDefaultRouter())
   const [chatContext] = useState<ChatContext>(new ChatContext())
 
 
@@ -77,15 +73,6 @@ function App() {
             setPlaintext={setPlaintext}
             ciphertext={ciphertext}
             setCiphertext={setCiphertext}
-            symmetricKey={symmetricKey}
-          />
-
-          {/* 协议测试区域 */}
-          <ProtocolTestSection
-            protocolMessage={protocolMessage}
-            setProtocolMessage={setProtocolMessage}
-            router={router}
-            publicKey={publicKey}
             symmetricKey={symmetricKey}
           />
 
