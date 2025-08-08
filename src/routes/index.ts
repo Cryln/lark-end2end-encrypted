@@ -1,15 +1,19 @@
 import { Router } from 'itty-router';
 import { handlePostConfig, handleGetConfig } from '../controller/config.controller';
-import { handleRefreshFeishuToken, handleGetJsapiSignature, handleGetUserInfoByCode } from '../controller/feishu.controller';
+import { handleRefreshFeishuToken, handleGetJsapiSignature, handleGetUserInfoByCode ,authMiddleware } from '../controller/feishu.controller';
 
 // 创建路由实例
 const router = Router();
+
+
 
 /**
  * 配置路由
  * 集中管理所有API端点定义
  */
 router
+  // 应用鉴权中间件到所有路由
+  .all('*', authMiddleware)
   // 配置管理路由
   .post('/kv', handlePostConfig)
   .get('/kv', handleGetConfig)

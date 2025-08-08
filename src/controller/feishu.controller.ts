@@ -6,6 +6,52 @@ import { FeishuService } from '../service/feishu.service';
  */
 
 /**
+ * 鉴权中间件
+ * 验证请求中的Lark-User-Code头并注入用户标识到上下文
+ */
+export async function authMiddleware(request: Request, env: Env) {
+  // 跳过404路由的鉴权
+  if (request.url.includes('/404')) {
+    return;
+  }
+
+  // log 所有header
+  console.log(`[authMiddleware] 所有header: ${JSON.stringify(Object.fromEntries(request.headers))}`);
+
+  // 获取请求头中的Lark-User-Code
+  const userCode = request.headers.get('Lark-User-Code');
+  // 获取referer
+  const referer = request.headers.get('Referer')?.split('?')[0].split('#')[0];
+
+  // 验证用户代码
+  if (!userCode) {
+    return new Response(JSON.stringify({
+      success: false,
+      message: '未提供Lark-User-Code'
+    }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+  const userContext = await getUserContext(userCode, env, referer);
+  if (userContext && !userContext.authenticated) {
+    return new Response(JSON.stringify({
+      success: false,
+      message: '用户未认证'
+    }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
+  // 在请求对象上添加自定义属性，用于向下游传递用户标识
+  // 注意：Request对象是不可变的，我们通过扩展它的属性来传递信息
+  (request as any).userContext = userContext;
+  // 验证通过，继续处理请求
+  return;
+}
+
+/**
  * 刷新tenant_access_token
  * 此接口应被定时触发器调用
  */
@@ -114,11 +160,8 @@ export async function handleGetJsapiSignature(request: Request, env: Env) {
    * @returns 用户信息响应
    */
 export async function handleGetUserInfoByCode(request: Request, env: Env) {
-  // 定义请求体接口
-  interface GetUserInfoByCodeRequest {
-    code: string;
-    redirectUri?: string;
-  }
+    // 访问从中间件注入的用户上下文
+  const userContext = (request as any).userContext;
   try {
     // 检查是否提供了必要的环境变量
     if (!env.FEISHU_APP_ID || !env.FEISHU_APP_SECRET) {
@@ -131,22 +174,51 @@ export async function handleGetUserInfoByCode(request: Request, env: Env) {
       });
     }
 
-    // 解析请求体
-    let requestBody: GetUserInfoByCodeRequest;
-    try {
-      requestBody = await request.json() as GetUserInfoByCodeRequest;
-    } catch (error) {
+    const feishuService = new FeishuService(
+      env.TODO_CONFIG,
+      env.FEISHU_APP_ID,
+      env.FEISHU_APP_SECRET
+    );
+
+    // 第二步：获取用户信息
+    const userInfo = await feishuService.getUserInfo(userContext.userAccessToken);
+
+    console.log(`[handleGetUserInfoByCode] 获取用户信息成功: ${JSON.stringify(userInfo)}`);
+    return new Response(JSON.stringify({
+      success: true,
+      data: userInfo
+    }), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } catch (error: unknown) {
+    console.error('通过临时授权码获取用户信息失败:', error);
+    const errorMessage = error instanceof Error ? error.message : '未知错误';
+    return new Response(JSON.stringify({
+      success: false,
+      message: `通过临时授权码获取用户信息失败: ${errorMessage}`
+    }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+}
+
+async function getUserContext(userCode: string, env: Env, redirectUri?: string): Promise<any> {
+  try {
+    // 检查是否提供了必要的环境变量
+    if (!env.FEISHU_APP_ID || !env.FEISHU_APP_SECRET) {
       return new Response(JSON.stringify({
         success: false,
-        message: '请求体格式无效'
+        message: '缺少飞书应用ID或密钥'
       }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
+
     // 检查code参数
-    const code = requestBody.code;
+    const code = userCode;
     if (!code) {
       return new Response(JSON.stringify({
         success: false,
@@ -156,9 +228,6 @@ export async function handleGetUserInfoByCode(request: Request, env: Env) {
         headers: { 'Content-Type': 'application/json' }
       });
     }
-
-    // 获取redirectUri（可选）
-    const redirectUri = requestBody.redirectUri;
 
     const feishuService = new FeishuService(
       env.TODO_CONFIG,
@@ -170,17 +239,12 @@ export async function handleGetUserInfoByCode(request: Request, env: Env) {
     const userAccessTokenResponse = await feishuService.getUserAccessToken(code, redirectUri);
     console.log(`[handleGetUserInfoByCode] 获取user_access_token成功: ${JSON.stringify(userAccessTokenResponse)}`);
     const userAccessToken = userAccessTokenResponse.access_token;
-
-    // 第二步：获取用户信息
-    const userInfo = await feishuService.getUserInfo(userAccessToken);
-
-    console.log(`[handleGetUserInfoByCode] 获取用户信息成功: ${JSON.stringify(userInfo)}`);
-    return new Response(JSON.stringify({
-      success: true,
-      data: userInfo
-    }), {
-      headers: { 'Content-Type': 'application/json' }
-    });
+    const userContext = {
+      userCode,
+      userAccessToken,
+      authenticated: true
+    };
+    return userContext;
   } catch (error: unknown) {
     console.error('通过临时授权码获取用户信息失败:', error);
     const errorMessage = error instanceof Error ? error.message : '未知错误';
