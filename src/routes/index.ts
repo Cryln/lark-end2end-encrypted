@@ -1,6 +1,6 @@
 import { Router } from 'itty-router';
 import { handlePostConfig, handleGetConfig } from '../controller/config.controller';
-import { handleRefreshFeishuToken, handleGetJsapiSignature, handleGetUserInfoByCode ,authMiddleware } from '../controller/feishu.controller';
+import { handleGetJsapiSignature, handleGetUserInfoByCode ,authMiddleware } from '../controller/feishu.controller';
 
 // 创建路由实例
 const router = Router();
@@ -19,7 +19,6 @@ router
   .get('/kv', handleGetConfig)
 
   // 飞书API路由
-  .post('/feishu/refresh-token', handleRefreshFeishuToken)
   .get('/feishu/jsapi-signature', handleGetJsapiSignature)
   .post('/feishu/user-info', handleGetUserInfoByCode)
 
