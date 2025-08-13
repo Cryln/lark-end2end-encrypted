@@ -3,7 +3,7 @@
 	"version": "0.0.0",
 	"private": true,
 	"scripts": {
-		"deploy": "cd public && npm run build && cd .. && wrangler deploy",
+		"deploy": "cd public && npm install && npm run build && cd .. && npm install && wrangler deploy",
 		"dev": "wrangler dev",
 		"start": "wrangler dev",
 		"test": "vitest",
