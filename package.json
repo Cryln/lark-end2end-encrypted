@@ -3,7 +3,11 @@
 	"version": "0.0.0",
 	"private": true,
 	"scripts": {
-		"deploy": "cd public && npm install && npm run build && cd .. && npm install && wrangler deploy",
+		"preinstall": "cd public && npm install",
+		"fe-build": "cd public && npm run build",
+		"be-build": "echo 'No need when use wrangler deploy'",
+		"build": "npm run fe-build && npm run be-build",
+		"deploy": "wrangler deploy",
 		"dev": "wrangler dev",
 		"start": "wrangler dev",
 		"test": "vitest",
