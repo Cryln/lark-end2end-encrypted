@@ -108,11 +108,8 @@
 
 ```bash
 npm install
-# 安装前端依赖
-cd public
-npm install
-cd ..
 ```
+> 注：根目录的`preinstall`脚本会自动安装前端依赖。
 
 ### 2. 设置环境变量
 
@@ -123,13 +120,23 @@ wrangler secret put FEISHU_APP_ID
 wrangler secret put FEISHU_APP_SECRET
 ```
 
-### 3. 部署Worker
+### 3. 构建项目
+
+如果需要提前构建前端资源而不立即部署，可以执行：
+
+```bash
+npm run build
+```
+> 该命令会依次执行前端构建（`fe-build`），使用wrangler deploy时无需单独构建后端。
+
+### 4. 部署Worker
 
 ```bash
 npm run deploy
 ```
+> 该命令会直接调用`wrangler deploy`部署Worker。
 
-### 4. 本地开发
+### 5. 本地开发
 
 ```bash
 # 启动Worker本地开发服务器
